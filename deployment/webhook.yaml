@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-append-label
+  labels:
+    app: webhook-append-label
+spec:
+  publishNotReadyAddresses: true
+  ports:
+    - port: 443
+      targetPort: 8443
+  selector:
+    app: webhook-append-label
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-append-label
+  labels:
+    app: webhook-append-label
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-append-label
+  template:
+    metadata:
+      name: webhook-append-label
+      labels:
+        app: webhook-append-label
+    spec:
+      containers:
+        - name: webhook-append-label
+          image: grubastik/addlabelwebhook
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 250m
+              memory: 64Mi
+
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: webhook-append-label
+  labels:
+    app: webhook-append-label
+webhooks:
+  - name: webhook-append-label.default.svc.cluster.local
+    clientConfig:
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01ERXlOekl5TVRrd09Wb1hEVE13TURFeU5ESXlNVGt3T1Zvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTlNJCmFVT05YdUZxbXJXOEgzcXZ6REluUjR3SnF6RFd5eksrKzlHMStuNWsya3pteDQ0KzlUZzNQZ0JzbU5BaGdjbzMKK0U3WE5QaVhhNndPVkxOb0F3NzN0bXNDSm1QVjNJbWU1RVJiVlowbWlyQlVUaVkrZmZQVnU3MGtVc3cyVVlaRQpudzQ4bS91TWllOXZYMjkxYXlEaGNCZ0dJWUZvdVgvdlYxVlA4ZTRrdG5xQUJvSFN3Q3R6NUY3M1dEVUZnNGJZCkhLUUVNNmhXUnpTVHNLMUZyVUNZVkdGU2ZUYVFybnBzSWwzemE1MHRUb1dzN2xKaFVlL2NWY2Q5K2JqVlRQbVMKT3pDNWx3NEEydGJtZ2kyRjZOdUlkR3NxOTZSVkpKclI3STZqMVJ1Q1F1MFg0dmNiYngwYlVLa0o5b2pNdDVzNQo3cjFmSEhoOXlMVEJiZW5LenA4Q0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFJdkNsUHBTVWhBZlhyM014VzNnUGl3K0xyTm8Ka0x5NjZlQUMxYm9VT0F0Q3JObEpkYmpCeDBHWVVHdkJrWk1UNUF0bHBMd0ZGczBpZUJkdG52dlBldDhVcjZuRgoram9lbE1lUWkybURwbDNxK09rWFZycXhnWmdXK0lWTFZkUHdGdGhNQnM5MXd2Zjg0Sk84MnloeW1yQWp0UnNiCkE5V2Q0RW4zNDJFWHNQczRPdWFNRVZQY3NYdDhrMTlESk8rSTdWNng1U0hpanhhWWNrVFlxM3VFRldXRFFienQKUWpLRE5MQm02Qm1JamdaWVBRdXJZaGd1Vlo3bnhIVk8wMHdPRm5LV0JiQ1JyNjIrQ25HYmJySzVFcG9PUCt6aApFMHdDU2JwVFVPdHRlSmNWTHJwK2ZSSmwwL3ZjT2NtWE0zbll5OU1mMkRXL0syKzk5dmV1L3RMWDdKVT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+      service:
+        name: webhook-append-label
+        namespace: default
+        path: "/append-label"
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    
