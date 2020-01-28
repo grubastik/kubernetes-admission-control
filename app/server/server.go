@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grubastik/kubernetes-admission-control/internal/addlabels"
+	"github.com/grubastik/kubernetes-admission-control/internal/addlabel"
 	"github.com/grubastik/kubernetes-admission-control/internal/root"
 	"github.com/julienschmidt/httprouter"
 )
@@ -14,7 +14,7 @@ func Init(tls *tls.Config) *http.Server {
 	//configure router
 	router := httprouter.New()
 	router.GET("/", root.Index)
-	router.POST("/append-label", addlabels.AppendLabelsHandler)
+	router.POST("/append-label", addlabel.AppendLabelsHandler)
 
 	//configure server
 	s := &http.Server{

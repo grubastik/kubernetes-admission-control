@@ -1,4 +1,4 @@
-package addlabels
+package addlabel
 
 import (
 	"encoding/json"
@@ -62,7 +62,9 @@ func AppendLabelsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		// pass to admitFunc
 		responseAdmissionReview.Response = prepareLabelPatch(requestedAdmissionReview)
 	}
-	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
+	if requestedAdmissionReview.Request != nil {
+		responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
+	}
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
 		log.Println(err.Error())
@@ -73,14 +75,19 @@ func AppendLabelsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 }
 
 func prepareLabelPatch(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+	reviewResponse := v1beta1.AdmissionResponse{Allowed: false}
 	var pod corev1.Pod
+
+	if ar.Request == nil || ar.Request.Object.Raw == nil {
+		return &reviewResponse
+	}
+
 	raw := ar.Request.Object.Raw
 	err := json.Unmarshal(raw, &pod)
 	if err != nil {
 		return admissionResponseError(err)
 	}
 
-	reviewResponse := v1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
 	if len(pod.ObjectMeta.Labels) == 0 {
 		reviewResponse.Patch = []byte(`[{ "op": "add", "path": "/metadata/labels", "value": {"awesome-label": "webhook"}}]`)
